@@ -9,6 +9,7 @@ import { Positioning } from "@/components/landing/Positioning";
 import { Snapshot } from "@/components/landing/Snapshot";
 import { Configurations } from "@/components/landing/Configurations";
 // import { Location } from "@/components/landing/Location";
+
 import { LocationAdvantage } from "@/components/landing/LocationAdvantage";
 import { AmenitiesLight } from "@/components/landing/AmenitiesLight";
 import { WhyNow } from "@/components/landing/WhyNow";
