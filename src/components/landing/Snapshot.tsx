@@ -6,6 +6,8 @@ import one from "@/assets/one.jpeg";
 import zone from "@/assets/zone.png";
 import tower from "@/assets/tower3.jpeg"
 import lift from "@/assets/6lifts.png"
+import glass from "@/assets/metal.jpeg"
+import balcony from "@/assets/balcony.jpeg"
 
 /* ================= DATA ================= */
 const stats = [
@@ -25,7 +27,7 @@ const stats = [
     num: "~85 ft",
     label: "Running Balcony",
     sub: "Wraparound panorama",
-    img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200",
+    img: balcony,
   },
   {
     num: "4.23 Acres",
@@ -90,7 +92,7 @@ const stats = [
     num: "Glass & Metal",
     label: "Facade",
     sub: "Premium envelope",
-    img: "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200",
+    img: glass,
   },
 ];
 

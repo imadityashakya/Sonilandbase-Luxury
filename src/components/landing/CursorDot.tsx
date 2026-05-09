@@ -35,6 +35,21 @@ export function CursorDot() {
       }
     };
 
+    const onFocus = (e: FocusEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest("a, button, [role='button'], input, textarea, select, label")) {
+        ringRef.current?.classList.add("cursor-ring--hover");
+      }
+    };
+
+    const onBlur = (e: FocusEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest("a, button, [role='button'], input, textarea, select, label")) {
+        ringRef.current?.classList.remove("cursor-ring--hover");
+      }
+    };
+
+
     const tick = () => {
       rx += (mx - rx) * 0.18;
       ry += (my - ry) * 0.18;
@@ -49,6 +64,8 @@ export function CursorDot() {
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
     window.addEventListener("mouseover", onOver);
+    window.addEventListener("focusin", onFocus);
+    window.addEventListener("focusout", onBlur);
     document.documentElement.classList.add("has-cursor-dot");
 
     return () => {
@@ -57,6 +74,8 @@ export function CursorDot() {
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("mouseover", onOver);
+      window.removeEventListener("focusin", onFocus);
+      window.removeEventListener("focusout", onBlur);
       document.documentElement.classList.remove("has-cursor-dot");
     };
   }, []);

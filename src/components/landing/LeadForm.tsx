@@ -1,6 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 import { fadeUp, stagger } from "./motion";
@@ -8,10 +8,12 @@ import { SectionHeading } from "./SectionHeading";
 
 import mainLogo from "@/assets/bptpLogo.png";
 
+/* ================= VALIDATION ================= */
+
 const schema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: z.string().trim().min(2, "Enter valid name").max(80),
   phone: z.string().trim().regex(/^\d{10}$/, "Phone must be 10 digits"),
-  city: z.string().trim().min(2).max(60),
+  city: z.string().trim().min(2, "Enter valid city").max(60),
   type: z.enum(["End User", "Investor", "NRI Buyer"]),
 });
 
@@ -26,57 +28,104 @@ export function LeadForm() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [sent, setSent] = useState(false);
-
-  /* POPUP */
+  const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  /* ================= HANDLE INPUT ================= */
+
+  const updateField = (key: keyof Form, value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+
+    /* REMOVE ERROR ON TYPE */
+
+    setErrors((prev) => ({
+      ...prev,
+      [key]: "",
+    }));
+  };
+
+  /* ================= SUBMIT ================= */
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const r = schema.safeParse(form);
+    const result = schema.safeParse(form);
 
-    if (!r.success) {
-      const errs: Record<string, string> = {};
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
 
-      r.error.issues.forEach((i) => {
-        if (i.path[0]) errs[String(i.path[0])] = i.message;
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+
+        if (field) {
+          newErrors[String(field)] = issue.message;
+        }
       });
 
-      setErrors(errs);
+      setErrors(newErrors);
       return;
     }
 
     setErrors({});
+    setLoading(true);
 
     try {
-      setSent(true);
+      /* ================= EMAIL SEND ================= */
 
-      /* SHOW POPUP */
-      setShowPopup(true);
+      const response = await fetch(
+        "https://formsubmit.co/ajax/contact@thesonilandbase.com",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            name: form.name,
+            phone: form.phone,
+            city: form.city,
+            buyerType: form.type,
+            _subject: "New Lead From Website",
+          }),
+        }
+      );
 
-      /* RESET FORM */
-      setForm({
-        name: "",
-        phone: "",
-        city: "",
-        type: "End User",
-      });
+      const data = await response.json();
 
-      /* AUTO CLOSE */
-      setTimeout(() => {
-        setShowPopup(false);
-        setSent(false);
-      }, 3500);
+      if (data.success === "true" || response.ok) {
+        setShowPopup(true);
+
+        /* RESET */
+
+        setForm({
+          name: "",
+          phone: "",
+          city: "",
+          type: "End User",
+        });
+
+        setTimeout(() => {
+          setShowPopup(false);
+        }, 3500);
+      } else {
+        alert("Failed to submit form.");
+      }
     } catch (error) {
       console.error(error);
+      alert("Something went wrong.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <>
-      {/* SUCCESS POPUP */}
-      <AnimatePresence>
+      {/* ================= SUCCESS POPUP ================= */}
+
+      <AnimatePresence mode="wait">
         {showPopup && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -93,7 +142,7 @@ export function LeadForm() {
               initial={{ scale: 0.85, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.35 }}
               className="
                 relative
                 w-full max-w-md
@@ -106,44 +155,61 @@ export function LeadForm() {
               "
             >
               {/* CLOSE */}
+
               <button
                 onClick={() => setShowPopup(false)}
-                className="absolute top-4 right-4 text-white/60 hover:text-white transition"
+                className="
+                  absolute right-4 top-4
+                  text-white/60
+                  transition hover:text-white
+                "
               >
                 <X size={20} />
               </button>
 
               {/* LOGO */}
+
               <img
                 src={mainLogo}
                 alt="Logo"
-                className="mx-auto h-16 md:h-20 w-auto object-contain"
+                className="mx-auto h-16 w-auto object-contain md:h-20"
               />
 
               {/* TITLE */}
+
               <h2
                 className="
                   mt-6
-                  text-3xl md:text-4xl
-                  font-bold
+                  text-3xl font-bold
                   tracking-wide
                   text-[#B8914A]
+                  md:text-4xl
                 "
               >
                 THANK YOU
               </h2>
 
               {/* MESSAGE */}
-              <p className="mt-4 text-sm md:text-base leading-relaxed text-white/75">
-                The Soni Landbase will connect you shortly !
+
+              <p className="mt-4 text-sm leading-relaxed text-white/75 md:text-base">
+                The Soni Landbase team will contact you shortly.
               </p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* FORM SECTION */}
-      <section id="leadform" className="bg-[#ffffff] py-24 md:py-32">
+      {/* ================= FORM SECTION ================= */}
+
+      <section
+        id="leadform"
+        className="
+          relative z-10
+          bg-white
+          py-24
+          md:py-32
+        "
+      >
         <div className="mx-auto max-w-3xl px-5 md:px-8">
           <SectionHeading
             eyebrow="EOI OPEN"
@@ -152,97 +218,129 @@ export function LeadForm() {
             description="EOI window is open. Prices are at launch. This is the moment."
           />
 
+          {/* ================= FORM ================= */}
+
           <motion.form
             onSubmit={onSubmit}
             variants={stagger}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, margin: "-60px" }}
+            viewport={{ once: true }}
             className="
+              relative z-20
               mt-12
               rounded-xl
               border-2
+              border-[#8a6a1a]
               bg-white
               p-7
               shadow-lg
               md:p-10
             "
-            style={{ borderColor: "#8a6a1a" }}
           >
-            <motion.div variants={fadeUp} className="space-y-6">
-
+            <motion.div variants={fadeUp} className="space-y-7">
               {/* NAME */}
+
               <Field label="Full Name *" error={errors.name}>
                 <input
+                  type="text"
                   value={form.name}
                   onChange={(e) =>
-                    setForm({ ...form, name: e.target.value })
+                    updateField("name", e.target.value)
                   }
+                  placeholder="Your Name"
+                  maxLength={80}
+                  autoComplete="off"
                   className="
-                    w-full border-b bg-transparent
-                    py-3 text-ink font-medium
+                    relative z-30
+                    w-full
+                    border-b
+                    border-[#d4c2a0]
+                    bg-transparent
+                    py-3
+                    font-medium
+                    text-black
+                    outline-none
                     transition
-                    focus:outline-none
                     focus:border-[#8a6a1a]
                   "
-                  style={{ borderColor: "var(--border)" }}
-                  placeholder="Your name"
-                  maxLength={80}
                 />
               </Field>
 
               {/* PHONE */}
+
               <Field label="Mobile Number *" error={errors.phone}>
                 <div
-                  className="flex items-center gap-3 border-b py-3"
-                  style={{ borderColor: "var(--border)" }}
+                  className="
+                    relative z-30
+                    flex items-center gap-3
+                    border-b border-[#d4c2a0]
+                    py-3
+                  "
                 >
-                  <span className="font-medium text-muted-foreground">
+                  <span className="font-medium text-gray-500">
                     +91
                   </span>
 
                   <input
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={form.phone}
                     onChange={(e) =>
-                      setForm({
-                        ...form,
-                        phone: e.target.value
+                      updateField(
+                        "phone",
+                        e.target.value
                           .replace(/\D/g, "")
-                          .slice(0, 10),
-                      })
+                          .slice(0, 10)
+                      )
                     }
-                    className="
-                      flex-1 bg-transparent
-                      text-ink font-medium
-                      focus:outline-none
-                    "
                     placeholder="9876543210"
+                    className="
+                      flex-1
+                      bg-transparent
+                      font-medium
+                      text-black
+                      outline-none
+                    "
                   />
                 </div>
               </Field>
 
               {/* CITY */}
-              <Field label="City of Residence *" error={errors.city}>
+
+              <Field
+                label="City of Residence *"
+                error={errors.city}
+              >
                 <input
+                  type="text"
                   value={form.city}
                   onChange={(e) =>
-                    setForm({ ...form, city: e.target.value })
+                    updateField("city", e.target.value)
                   }
-                  className="
-                    w-full border-b bg-transparent
-                    py-3 text-ink font-medium
-                    transition
-                    focus:outline-none
-                    focus:border-[#8a6a1a]
-                  "
-                  style={{ borderColor: "var(--border)" }}
                   placeholder="Gurugram"
                   maxLength={60}
+                  autoComplete="off"
+                  className="
+                    relative z-30
+                    w-full
+                    border-b
+                    border-[#d4c2a0]
+                    bg-transparent
+                    py-3
+                    font-medium
+                    text-black
+                    outline-none
+                    transition
+                    focus:border-[#8a6a1a]
+                  "
                 />
               </Field>
 
               {/* TYPE */}
-              <div>
+
+              <div className="relative z-30">
                 <label
                   className="
                     mb-3 block
@@ -256,42 +354,45 @@ export function LeadForm() {
                 </label>
 
                 <div className="flex flex-wrap gap-2.5">
-                  {(["End User", "Investor", "NRI Buyer"] as const).map(
-                    (t) => (
-                      <button
-                        type="button"
-                        key={t}
-                        onClick={() => setForm({ ...form, type: t })}
-                        className={`
-                          rounded-md border px-4 py-2.5
-                          text-[0.65rem]
-                          font-bold
-                          tracking-[0.2em]
-                          transition-all duration-300
-                          ${
-                            form.type === t
-                              ? "border-ink bg-ink text-white"
-                              : "bg-white text-ink hover:border-[#8a6a1a] hover:text-[#8a6a1a]"
-                          }
-                        `}
-                        style={
-                          form.type !== t
-                            ? { borderColor: "var(--border)" }
-                            : {}
+                  {(
+                    ["End User", "Investor", "NRI Buyer"] as const
+                  ).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() =>
+                        updateField("type", t)
+                      }
+                      className={`
+                        rounded-md
+                        border
+                        px-4 py-2.5
+                        text-[0.65rem]
+                        font-bold
+                        tracking-[0.2em]
+                        transition-all duration-300
+                        ${
+                          form.type === t
+                            ? "border-black bg-black text-white"
+                            : "border-[#d4c2a0] bg-white text-black hover:border-[#8a6a1a] hover:text-[#8a6a1a]"
                         }
-                      >
-                        {t.toUpperCase()}
-                      </button>
-                    )
-                  )}
+                      `}
+                    >
+                      {t.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* BUTTON */}
+
               <button
                 type="submit"
+                disabled={loading}
                 className="
-                  mt-4 w-full rounded-md
+                  mt-4
+                  flex w-full items-center justify-center
+                  rounded-md
                   bg-[#8a6a1a]
                   py-4
                   text-[0.75rem]
@@ -301,30 +402,37 @@ export function LeadForm() {
                   transition-all duration-300
                   hover:-translate-y-0.5
                   hover:bg-[#6f5413]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-70
                 "
               >
-                {sent ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Check size={16} />
-                    REQUEST RECEIVED
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2
+                      size={16}
+                      className="animate-spin"
+                    />
+                    SENDING...
                   </span>
                 ) : (
                   "REQUEST A CALLBACK"
                 )}
               </button>
 
-              <p className="text-center text-xs text-muted-foreground">
-                By submitting, you consent to being contacted regarding this
-                project.
+              <p className="text-center text-xs text-gray-500">
+                By submitting, you consent to being contacted
+                regarding this project.
               </p>
             </motion.div>
           </motion.form>
 
-          <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground">
-            This page is managed by The Soni Landbase, an authorised
-            channel partner. HRERA Reg. No.
-            RC/REP/HARERA/GGM/981/713/2025/84. All renders are artistic
-            impressions only.
+          {/* FOOTER */}
+
+          <p className="mt-6 text-center text-[11px] leading-relaxed text-gray-500">
+            This page is managed by The Soni Landbase,
+            an authorised channel partner.
+            HRERA Reg. No. RC/REP/HARERA/GGM/981/713/2025/84.
+            All renders are artistic impressions only.
           </p>
         </div>
       </section>
@@ -344,7 +452,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="relative z-30">
       <label
         className="
           mb-2 block
