@@ -49,7 +49,7 @@ const stats = [
   },
   {
     num: "2 Configs",
-    label: "2,600 & 2,900 Sqft",
+    label: "2,538 & 2,918 Sqft",
     sub: "3 BHK + Study",
     img: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=1200",
   },
