@@ -106,23 +106,71 @@ export function Snapshot() {
 
     let animationFrame: number;
     const speed = 0.6;
+    let isPaused = false;
+    let isDragging = false;
+    let startX = 0;
+    let scrollLeftStart = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isPaused = true;
+      isDragging = true;
+      startX = e.pageX - el.offsetLeft;
+      scrollLeftStart = el.scrollLeft;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - el.offsetLeft;
+      const walk = (x - startX) * 2; // Scroll speed multiplier
+      el.scrollLeft = scrollLeftStart - walk;
+    };
+
+    const handleMouseUp = () => {
+      isPaused = false;
+      isDragging = false;
+    };
+
+    const handleMouseEnter = () => {
+      isPaused = true;
+    };
+
+    const handleMouseLeave = () => {
+      isPaused = false;
+      isDragging = false;
+    };
 
     const scroll = () => {
       if (!el) return;
 
-      el.scrollLeft += speed;
+      if (!isPaused && !isDragging) {
+        el.scrollLeft += speed;
 
-      /* Infinite loop */
-      if (el.scrollLeft >= el.scrollWidth / 2) {
-        el.scrollLeft = 0;
+        /* Infinite loop */
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          el.scrollLeft = 0;
+        }
       }
 
       animationFrame = requestAnimationFrame(scroll);
     };
 
+    el.addEventListener("mousedown", handleMouseDown);
+    el.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    el.addEventListener("mouseenter", handleMouseEnter);
+    el.addEventListener("mouseleave", handleMouseLeave);
+
     animationFrame = requestAnimationFrame(scroll);
 
-    return () => cancelAnimationFrame(animationFrame);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      el.removeEventListener("mousedown", handleMouseDown);
+      el.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      el.removeEventListener("mouseenter", handleMouseEnter);
+      el.removeEventListener("mouseleave", handleMouseLeave);
+    };
   }, []);
 
   return (

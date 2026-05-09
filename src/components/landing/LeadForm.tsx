@@ -98,6 +98,11 @@ export function LeadForm() {
       if (data.success === "true" || response.ok) {
         setShowPopup(true);
 
+        // Meta Ads Lead Conversion
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "Lead");
+        }
+
         /* RESET */
 
         setForm({
