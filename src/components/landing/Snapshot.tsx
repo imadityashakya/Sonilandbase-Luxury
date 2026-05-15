@@ -105,7 +105,7 @@ export function Snapshot() {
     if (!el) return;
 
     let animationFrame: number;
-    const speed = 0.6;
+    const speed = window.innerWidth < 768 ? 1.2 : 0.6;
     let isPaused = false;
     let isDragging = false;
     let startX = 0;
@@ -127,6 +127,28 @@ export function Snapshot() {
     };
 
     const handleMouseUp = () => {
+      isPaused = false;
+      isDragging = false;
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      isPaused = true;
+      isDragging = true;
+      startX = e.touches[0].pageX - el.offsetLeft;
+      scrollLeftStart = el.scrollLeft;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      // We don't call preventDefault on touchmove because it can block page scrolling
+      // unless the element is specifically intended to capture all touch events.
+      // But for a horizontal scroller, we usually want it.
+      const x = e.touches[0].pageX - el.offsetLeft;
+      const walk = (x - startX) * 2;
+      el.scrollLeft = scrollLeftStart - walk;
+    };
+
+    const handleTouchEnd = () => {
       isPaused = false;
       isDragging = false;
     };
@@ -160,6 +182,9 @@ export function Snapshot() {
     window.addEventListener("mouseup", handleMouseUp);
     el.addEventListener("mouseenter", handleMouseEnter);
     el.addEventListener("mouseleave", handleMouseLeave);
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd);
 
     animationFrame = requestAnimationFrame(scroll);
 
@@ -170,6 +195,9 @@ export function Snapshot() {
       window.removeEventListener("mouseup", handleMouseUp);
       el.removeEventListener("mouseenter", handleMouseEnter);
       el.removeEventListener("mouseleave", handleMouseLeave);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
     };
   }, []);
 
