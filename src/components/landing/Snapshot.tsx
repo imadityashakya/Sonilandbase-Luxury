@@ -133,17 +133,24 @@ export function Snapshot() {
 
     const handleTouchStart = (e: TouchEvent) => {
       isPaused = true;
+      isDragging = true;
+      startX = e.touches[0].pageX - el.offsetLeft;
+      scrollLeftStart = el.scrollLeft;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      const x = e.touches[0].pageX - el.offsetLeft;
+      const walk = (x - startX) * 2;
+      el.scrollLeft = scrollLeftStart - walk;
       isPaused = true;
     };
 
     const handleTouchEnd = () => {
-      // Give it a small delay before resuming auto-scroll
+      isDragging = false;
       setTimeout(() => {
         isPaused = false;
-      }, 1000);
+      }, 500);
     };
 
     const handleMouseEnter = () => {
