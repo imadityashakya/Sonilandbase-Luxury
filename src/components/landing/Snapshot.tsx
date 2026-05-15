@@ -133,24 +133,17 @@ export function Snapshot() {
 
     const handleTouchStart = (e: TouchEvent) => {
       isPaused = true;
-      isDragging = true;
-      startX = e.touches[0].pageX - el.offsetLeft;
-      scrollLeftStart = el.scrollLeft;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging) return;
-      // We don't call preventDefault on touchmove because it can block page scrolling
-      // unless the element is specifically intended to capture all touch events.
-      // But for a horizontal scroller, we usually want it.
-      const x = e.touches[0].pageX - el.offsetLeft;
-      const walk = (x - startX) * 2;
-      el.scrollLeft = scrollLeftStart - walk;
+      isPaused = true;
     };
 
     const handleTouchEnd = () => {
-      isPaused = false;
-      isDragging = false;
+      // Give it a small delay before resuming auto-scroll
+      setTimeout(() => {
+        isPaused = false;
+      }, 1000);
     };
 
     const handleMouseEnter = () => {
@@ -224,7 +217,6 @@ export function Snapshot() {
             flex gap-6 md:gap-8
             overflow-x-scroll
             no-scrollbar
-            scroll-smooth
             pb-4
           "
         >
@@ -311,6 +303,7 @@ export function Snapshot() {
         .no-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+          touch-action: pan-y;
         }
       `}</style>
     </section>
