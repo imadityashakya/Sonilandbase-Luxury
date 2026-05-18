@@ -3,6 +3,7 @@ import {
   Instagram,
   Linkedin,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import logo from "@/assets/bptpLogo.png";
 
 export function FooterDark() {
@@ -108,14 +109,24 @@ export function FooterDark() {
               { label: "Amenities", href: "#amenities" },
               { label: "Gallery", href: "#gallery" },
               { label: "Contact", href: "#leadform" },
+              { label: "Privacy Policy", href: "/privacy" },
             ].map((link) => (
               <li key={link.href}>
-                <a
-                  href={link.href}
-                  className="font-semibold text-white/70 hover:text-[#8a6a1a] transition-colors"
-                >
-                  {link.label}
-                </a>
+                {link.href.startsWith("#") ? (
+                  <a
+                    href={link.href}
+                    className="font-semibold text-white/70 hover:text-[#8a6a1a] transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    to={link.href}
+                    className="font-semibold text-white/70 hover:text-[#8a6a1a] transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
