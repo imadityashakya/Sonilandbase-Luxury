@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Loader2 } from "lucide-react";
 import { z } from "zod";
+import { useNavigate } from "@tanstack/react-router";
 
 import { fadeUp, stagger } from "./motion";
 import { SectionHeading } from "./SectionHeading";
@@ -10,7 +11,7 @@ import mainLogo from "@/assets/bptpLogo.png";
 
 /* ================= VALIDATION ================= */
 
-const schema = z.object({
+const schema = z.object({ 
   name: z.string().trim().min(2, "Enter valid name").max(80),
   phone: z.string().trim().regex(/^\d{10}$/, "Phone must be 10 digits"),
   city: z.string().trim().min(2, "Enter valid city").max(60),
@@ -29,7 +30,7 @@ export function LeadForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+  const navigate = useNavigate();
 
   /* ================= HANDLE INPUT ================= */
 
@@ -96,7 +97,7 @@ export function LeadForm() {
       const data = await response.json();
 
       if (data.success === "true" || response.ok) {
-        setShowPopup(true);
+        navigate({ to: "/thankyou" });
 
         // Meta Ads Lead Conversion
         if (typeof window !== "undefined" && (window as any).fbq) {
@@ -111,10 +112,6 @@ export function LeadForm() {
           city: "",
           type: "End User",
         });
-
-        setTimeout(() => {
-          setShowPopup(false);
-        }, 3500);
       } else {
         alert("Failed to submit form.");
       }
@@ -128,82 +125,6 @@ export function LeadForm() {
 
   return (
     <>
-      {/* ================= SUCCESS POPUP ================= */}
-
-      <AnimatePresence mode="wait">
-        {showPopup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="
-              fixed inset-0 z-[9999]
-              flex items-center justify-center
-              bg-black/70 backdrop-blur-sm
-              px-4
-            "
-          >
-            <motion.div
-              initial={{ scale: 0.85, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.35 }}
-              className="
-                relative
-                w-full max-w-md
-                rounded-2xl
-                border border-[#8a6a1a]/40
-                bg-[#0B0B0B]
-                px-8 py-10
-                text-center
-                shadow-[0_20px_80px_rgba(0,0,0,0.6)]
-              "
-            >
-              {/* CLOSE */}
-
-              <button
-                onClick={() => setShowPopup(false)}
-                className="
-                  absolute right-4 top-4
-                  text-white/60
-                  transition hover:text-white
-                "
-              >
-                <X size={20} />
-              </button>
-
-              {/* LOGO */}
-
-              <img
-                src={mainLogo}
-                alt="Logo"
-                className="mx-auto h-16 w-auto object-contain md:h-20"
-              />
-
-              {/* TITLE */}
-
-              <h2
-                className="
-                  mt-6
-                  text-3xl font-bold
-                  tracking-wide
-                  text-[#B8914A]
-                  md:text-4xl
-                "
-              >
-                THANK YOU
-              </h2>
-
-              {/* MESSAGE */}
-
-              <p className="mt-4 text-sm leading-relaxed text-white/75 md:text-base">
-                The Soni Landbase team will contact you shortly.
-              </p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ================= FORM SECTION ================= */}
 
       <section

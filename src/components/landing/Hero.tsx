@@ -5,6 +5,7 @@ import {
   m,
   AnimatePresence,
 } from "framer-motion";
+import { useNavigate } from "@tanstack/react-router";
 
 import { ChevronDown, X, Loader2 } from "lucide-react";
 
@@ -15,8 +16,7 @@ const slides = Object.freeze([hero, hero2]);
 
 function HeroComponent() {
   const [index, setIndex] = useState(0);
-
-  const [showPopup, setShowPopup] = useState(false);
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
 
@@ -100,7 +100,7 @@ function HeroComponent() {
       const data = await response.json();
 
       if (response.ok) {
-        setShowPopup(true);
+        navigate({ to: "/thankyou" });
 
         setForm({
           name: "",
@@ -109,10 +109,6 @@ function HeroComponent() {
           message: "",
           consent: false,
         });
-
-        setTimeout(() => {
-          setShowPopup(false);
-        }, 3000);
       } else {
         console.error(data);
         alert("Something went wrong.");
@@ -127,36 +123,6 @@ function HeroComponent() {
 
   return (
     <>
-      {/* SUCCESS POPUP */}
-      <AnimatePresence>
-        {showPopup && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 px-4">
-            <m.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="relative w-full max-w-sm rounded-3xl border border-[#B8914A]/30 bg-[#0B0B0B] p-8 text-center shadow-2xl"
-            >
-              <button
-                onClick={() => setShowPopup(false)}
-                className="absolute right-4 top-4 text-white/60 hover:text-white"
-              >
-                <X size={18} />
-              </button>
-
-              <h2 className="mt-2 text-3xl font-bold text-[#B8914A]">
-                THANK YOU
-              </h2>
-
-              <p className="mt-3 text-sm leading-relaxed text-white/75">
-                The Soni Landbase team will contact you shortly.
-              </p>
-            </m.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* HERO SECTION */}
       <section
         id="home"
